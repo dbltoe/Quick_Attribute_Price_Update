@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.0.1 — 2026-10-24
+
+- Option Name and Option Value now search by name. A store with two options both called "Size:", or with "1 inch" saved as several different option values, gets one "Size:" entry and one "1 inch" entry, and each finds every matching row. Before, each list showed the duplicates separately with nothing to tell them apart, and choosing one found only part of the rows.
+- Choosing an option value while Option Name is on "All Option Names" now picks its option name too.
+- Links and bookmarks with a single option or value ID still work.
+
 ## v3.0.0 — 2026-10-24
 
 First release, numbered 3.0.0 to match its companion, Quick Price Update. For Zen Cart 1.5.8a through 3.0.0 on PHP 7.4 through 8.5. No core file is changed and no table is added.

@@ -10,8 +10,8 @@ Each row is one attribute of one product: one option value (for example *Size: 1
 |---|---|
 | Product IDs | One or more IDs or ranges: `12`, `12, 15`, `40-55`, `12 15 40-55`. Exact matches only. Up to 1,000 IDs per search. |
 | Category | Products in that category, including products linked into it from elsewhere. **Include Subcategories** adds everything below it. |
-| Option Name | Only rows for that option (for example *Size*). The list holds the options some product uses. |
-| Option Value | Only rows for that value (for example *1 inch*). Choosing an option name narrows this list to its values. Text and file options have no values; pick the option name instead. |
+| Option Name | Only rows for that option (for example *Size*). The list holds the options some product uses, by name: two options with the same name (say, two both called *Size:*) are one entry and are searched together. |
+| Option Value | Only rows for that value (for example *1 inch*), under the option name it's listed with. Values go by name too: *1 inch* saved as several option values is one entry that finds them all. Choosing an option name narrows this list to its values; choosing a value under All Option Names picks its option name for you. Text and file options have no values; pick the option name instead. |
 | Product Name or Model | Every word must appear in the product's name (in the admin's language) or its model. |
 | Product Status | Active and Inactive, Active Only, or Inactive Only. **Priced Rows Only** hides rows whose price and one-time price are both 0. |
 | Sort Products By / Direction | Sort Order (the default, like Categories/Products), ID, Name or Model. Within a product, rows follow the order the storefront shows the options in. |

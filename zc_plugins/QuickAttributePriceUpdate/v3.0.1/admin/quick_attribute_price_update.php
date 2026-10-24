@@ -119,15 +119,20 @@ $qapuPriceBox = static function ($name, $value, $was, $rowId, $label, $invalid) 
 };
 
 $qapuCategoryOptions = array_merge([['id' => '', 'text' => QAPU_CATEGORY_ANY]], zen_get_category_tree());
-$qapuOptionNames = QuickAttributePriceUpdate::optionNames();
-$qapuOptionOptions = array_merge([['id' => '', 'text' => QAPU_OPTION_ANY]], $qapuOptionNames);
-$qapuOptionNameById = [];
-foreach ($qapuOptionNames as $qapuOpt) {
-    $qapuOptionNameById[$qapuOpt['id']] = $qapuOpt['text'];
+// One entry per option NAME and, under it, one per value name; each carries every ID
+// with that name, so two options both called "Size:" are searched together.
+$qapuLists = QuickAttributePriceUpdate::optionLists();
+$qapuOptionOptions = [];
+$qapuOptionMatched = $qapuFilters['oid'] === '';
+foreach ($qapuLists['options'] as $qapuOpt) {
+    $qapuOptionOptions[] = ['id' => $qapuOpt['id'], 'text' => $qapuOpt['text'] !== '' ? $qapuOpt['text'] : sprintf(QAPU_OPTION_MISSING, $qapuOpt['id'])];
+    $qapuOptionMatched = $qapuOptionMatched || $qapuOpt['id'] === $qapuFilters['oid'];
 }
-$qapuValuesByOption = [];
-foreach (QuickAttributePriceUpdate::optionValues() as $qapuVal) {
-    $qapuValuesByOption[$qapuVal['oid']][] = $qapuVal;
+$qapuValueMatched = $qapuFilters['vid'] === '';
+foreach ($qapuLists['values'] as $qapuGroup) {
+    foreach ($qapuGroup['values'] as $qapuVal) {
+        $qapuValueMatched = $qapuValueMatched || $qapuVal['id'] === $qapuFilters['vid'];
+    }
 }
 $qapuStatusOptions = [
     ['id' => '', 'text' => QAPU_STATUS_ANY],
@@ -202,16 +207,27 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
       </div>
       <div class="form-group">
         <label for="qapuOid"><?php echo QAPU_LABEL_OPTION; ?></label><br>
-        <?php echo zen_draw_pull_down_menu('qapu_oid', $qapuOptionOptions, $qapuFilters['oid'], 'id="qapuOid" class="form-control"'); ?>
+        <select name="qapu_oid" id="qapuOid" class="form-control">
+          <option value=""><?php echo $qapuEsc(QAPU_OPTION_ANY); ?></option>
+<?php if (!$qapuOptionMatched) { ?>
+          <option value="<?php echo $qapuEsc($qapuFilters['oid']); ?>" selected><?php echo $qapuEsc(sprintf(QAPU_LIST_BY_ID, $qapuFilters['oid'])); ?></option>
+<?php } ?>
+<?php foreach ($qapuOptionOptions as $qapuOpt) { ?>
+          <option value="<?php echo $qapuEsc($qapuOpt['id']); ?>"<?php echo $qapuFilters['oid'] === $qapuOpt['id'] ? ' selected' : ''; ?>><?php echo $qapuEsc($qapuOpt['text']); ?></option>
+<?php } ?>
+        </select>
       </div>
       <div class="form-group">
         <label for="qapuVid"><?php echo QAPU_LABEL_VALUE; ?></label><br>
         <select name="qapu_vid" id="qapuVid" class="form-control">
           <option value=""><?php echo $qapuEsc(QAPU_VALUE_ANY); ?></option>
-<?php foreach ($qapuValuesByOption as $qapuOid => $qapuValues) { ?>
-          <optgroup label="<?php echo $qapuEsc($qapuOptionNameById[(string)$qapuOid] ?? sprintf(QAPU_OPTION_MISSING, (int)$qapuOid)); ?>" data-oid="<?php echo (int)$qapuOid; ?>">
-<?php     foreach ($qapuValues as $qapuVal) { ?>
-            <option value="<?php echo (int)$qapuVal['id']; ?>"<?php echo $qapuFilters['vid'] === $qapuVal['id'] ? ' selected' : ''; ?>><?php echo $qapuEsc($qapuVal['text']); ?></option>
+<?php if (!$qapuValueMatched) { ?>
+          <option value="<?php echo $qapuEsc($qapuFilters['vid']); ?>" selected><?php echo $qapuEsc(sprintf(QAPU_LIST_BY_ID, $qapuFilters['vid'])); ?></option>
+<?php } ?>
+<?php foreach ($qapuLists['values'] as $qapuGroup) { ?>
+          <optgroup label="<?php echo $qapuEsc($qapuGroup['label'] !== '' ? $qapuGroup['label'] : sprintf(QAPU_OPTION_MISSING, $qapuGroup['oid'])); ?>" data-oid="<?php echo $qapuEsc($qapuGroup['oid']); ?>">
+<?php     foreach ($qapuGroup['values'] as $qapuVal) { ?>
+            <option value="<?php echo $qapuEsc($qapuVal['id']); ?>"<?php echo $qapuFilters['vid'] === $qapuVal['id'] ? ' selected' : ''; ?>><?php echo $qapuEsc($qapuVal['text'] !== '' ? $qapuVal['text'] : sprintf(QAPU_VALUE_MISSING, $qapuVal['id'])); ?></option>
 <?php     } ?>
           </optgroup>
 <?php } ?>
@@ -447,6 +463,18 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
     if (optionSelect) {
         optionSelect.addEventListener('change', filterValues);
         filterValues();
+    }
+    // Choosing a value under "All Option Names" picks its option too, so the search
+    // means "Size: 1 inch", not "1 inch" under any option.
+    if (optionSelect && valueSelect) {
+        valueSelect.addEventListener('change', function () {
+            var chosen = valueSelect.options[valueSelect.selectedIndex];
+            var group = chosen ? chosen.parentNode : null;
+            if (group && group.tagName === 'OPTGROUP' && optionSelect.value === '') {
+                optionSelect.value = group.getAttribute('data-oid');
+                filterValues();
+            }
+        });
     }
 
     var form = document.getElementById('qapuForm');

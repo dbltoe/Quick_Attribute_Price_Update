@@ -1,5 +1,14 @@
 Quick Attribute Price Update -- changelog
 
+v3.0.1 (2026-10-24)
+  - Option Name and Option Value search by name. Two options both called
+    "Size:", or "1 inch" saved as several option values, now show once
+    each and find every matching row; before, the duplicates were listed
+    separately, looked the same, and each found only part of the rows.
+  - Choosing an option value under "All Option Names" picks its option
+    name too.
+  - Links and bookmarks with a single option or value ID still work.
+
 v3.0.0 (2026-10-24)
   First release, numbered 3.0.0 to match its companion, Quick Price
   Update. For Zen Cart 1.5.8a through 3.0.0 on PHP 7.4 through 8.5.

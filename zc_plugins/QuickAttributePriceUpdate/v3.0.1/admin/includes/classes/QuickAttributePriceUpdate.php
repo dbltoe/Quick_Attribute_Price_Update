@@ -17,7 +17,7 @@ if (!defined('IS_ADMIN_FLAG')) {
 
 class QuickAttributePriceUpdate
 {
-    public const VERSION = 'v3.0.0';
+    public const VERSION = 'v3.0.1';
 
     /** Most product IDs one search may name, so a typo like 1-999999 can't build a huge query. */
     public const MAX_IDS = 1000;
@@ -331,8 +331,8 @@ class QuickAttributePriceUpdate
             'ids' => trim((string)($get['qapu_ids'] ?? '')),
             'cid' => $digits($get['qapu_cid'] ?? ''),
             'sub' => !empty($get['qapu_sub']) ? '1' : '',
-            'oid' => $digits($get['qapu_oid'] ?? ''),
-            'vid' => $digits($get['qapu_vid'] ?? ''),
+            'oid' => self::idCsv($get['qapu_oid'] ?? ''),
+            'vid' => self::idCsv($get['qapu_vid'] ?? ''),
             'kw' => trim((string)($get['qapu_kw'] ?? '')),
             'status' => $status,
             'priced' => !empty($get['qapu_priced']) ? '1' : '',
@@ -389,57 +389,119 @@ class QuickAttributePriceUpdate
     }
 
     /**
-     * Every option name that some product uses, for the Option Name list.
+     * A list of IDs from the query string, "2,7" or "56", as one canonical string
+     * ("2,7": unique, ascending, no zeros). Anything but digits and commas, or more
+     * than MAX_IDS IDs, gives '' (no filter).
      *
-     * @return array [['id' => '3', 'text' => 'Size', 'type' => 0], ...]
+     * @param mixed $raw
+     * @return string
      */
-    public static function optionNames()
+    public static function idCsv($raw)
     {
-        global $db;
-        $languageId = (int)$_SESSION['languages_id'];
-        $result = $db->Execute(
-            'SELECT po.products_options_id, po.products_options_name, po.products_options_type'
-            . ' FROM ' . TABLE_PRODUCTS_OPTIONS . ' po'
-            . ' WHERE po.language_id = ' . $languageId
-            . ' AND po.products_options_id IN (SELECT DISTINCT pa.options_id FROM ' . TABLE_PRODUCTS_ATTRIBUTES . ' pa)'
-            . ' ORDER BY po.products_options_sort_order, po.products_options_name, po.products_options_id'
-        );
-        $out = [];
-        foreach ($result as $row) {
-            $out[] = [
-                'id' => (string)(int)$row['products_options_id'],
-                'text' => (string)$row['products_options_name'],
-                'type' => (int)$row['products_options_type'],
-            ];
+        if (!is_scalar($raw)) {
+            return '';
         }
-        return $out;
+        $raw = trim((string)$raw);
+        if ($raw === '' || !preg_match('/^\d{1,10}(,\d{1,10})*$/', $raw)) {
+            return '';
+        }
+        $ids = [];
+        foreach (explode(',', $raw) as $id) {
+            if ((int)$id > 0) {
+                $ids[(int)$id] = true;
+            }
+        }
+        if ($ids === [] || count($ids) > self::MAX_IDS) {
+            return '';
+        }
+        $ids = array_keys($ids);
+        sort($ids);
+        return implode(',', $ids);
     }
 
     /**
-     * Every option value that some product uses, with the option it belongs to,
-     * for the Option Value list (the page shows only the chosen option's values).
-     * Text and file options have no values of their own, so they don't appear.
+     * The Option Name and Option Value lists, read from the attributes products use.
      *
-     * @return array [['id' => '7', 'text' => '1 inch', 'oid' => '3'], ...]
+     * @return array see groupOptionLists()
      */
-    public static function optionValues()
+    public static function optionLists()
     {
         global $db;
         $languageId = (int)$_SESSION['languages_id'];
         $result = $db->Execute(
-            'SELECT DISTINCT pa.options_id, pa.options_values_id, pov.products_options_values_name, pov.products_options_values_sort_order'
+            'SELECT DISTINCT pa.options_id, pa.options_values_id, po.products_options_name, po.products_options_sort_order,'
+            . ' pov.products_options_values_name, pov.products_options_values_sort_order'
             . ' FROM ' . TABLE_PRODUCTS_ATTRIBUTES . ' pa'
-            . ' INNER JOIN ' . TABLE_PRODUCTS_OPTIONS_VALUES . ' pov ON (pov.products_options_values_id = pa.options_values_id AND pov.language_id = ' . $languageId . ')'
-            . ' WHERE pa.options_values_id > 0'
-            . ' ORDER BY pa.options_id, pov.products_options_values_sort_order, pov.products_options_values_name, pa.options_values_id'
+            . ' LEFT JOIN ' . TABLE_PRODUCTS_OPTIONS . ' po ON (po.products_options_id = pa.options_id AND po.language_id = ' . $languageId . ')'
+            . ' LEFT JOIN ' . TABLE_PRODUCTS_OPTIONS_VALUES . ' pov ON (pov.products_options_values_id = pa.options_values_id AND pov.language_id = ' . $languageId . ')'
+            . ' ORDER BY po.products_options_sort_order, po.products_options_name, pa.options_id,'
+            . ' pov.products_options_values_sort_order, pov.products_options_values_name, pa.options_values_id'
         );
-        $out = [];
+        $rows = [];
         foreach ($result as $row) {
-            $out[] = [
-                'id' => (string)(int)$row['options_values_id'],
-                'text' => (string)$row['products_options_values_name'],
-                'oid' => (string)(int)$row['options_id'],
-            ];
+            $rows[] = $row;
+        }
+        return self::groupOptionLists($rows);
+    }
+
+    /**
+     * Pure part of optionLists(). Options are listed by NAME: a store with two
+     * options both called "Size:" gets one "Size:" entry carrying both IDs
+     * ("2,7"), and under it each value name once, carrying every value ID with
+     * that name ("1 inch" = "2,56,67"). Names compare as MySQL's default
+     * collation does: case and surrounding spaces don't count. An option or
+     * value with no name in the admin's language is kept apart by its ID, with
+     * an empty text for the page to label. Text and file options (value 0) have
+     * no values to list.
+     *
+     * @param array $rows options_id, options_values_id, products_options_name, products_options_values_name
+     *                    in display order
+     * @return array ['options' => [['id' => '2,7', 'text' => 'Size:'], ...],
+     *                'values' => [['oid' => '2,7', 'label' => 'Size:', 'values' => [['id' => '2,56,67', 'text' => '1 inch'], ...]], ...]]
+     */
+    public static function groupOptionLists(array $rows)
+    {
+        $key = static function ($name, $id) {
+            $name = trim((string)$name);
+            return $name === '' ? '#' . (int)$id : strtolower($name);
+        };
+        $options = [];
+        $values = [];
+        foreach ($rows as $row) {
+            $oid = (int)$row['options_id'];
+            $vid = (int)$row['options_values_id'];
+            $okey = $key($row['products_options_name'] ?? '', $oid);
+            if (!isset($options[$okey])) {
+                $options[$okey] = ['ids' => [], 'text' => trim((string)($row['products_options_name'] ?? ''))];
+                $values[$okey] = [];
+            }
+            $options[$okey]['ids'][$oid] = true;
+            if ($vid <= 0) {
+                continue;
+            }
+            $vkey = $key($row['products_options_values_name'] ?? '', $vid);
+            if (!isset($values[$okey][$vkey])) {
+                $values[$okey][$vkey] = ['ids' => [], 'text' => trim((string)($row['products_options_values_name'] ?? ''))];
+            }
+            $values[$okey][$vkey]['ids'][$vid] = true;
+        }
+        $csv = static function (array $set) {
+            $ids = array_keys($set);
+            sort($ids);
+            return implode(',', $ids);
+        };
+        $out = ['options' => [], 'values' => []];
+        foreach ($options as $okey => $opt) {
+            $oids = $csv($opt['ids']);
+            $out['options'][] = ['id' => $oids, 'text' => $opt['text']];
+            if ($values[$okey] === []) {
+                continue;
+            }
+            $group = ['oid' => $oids, 'label' => $opt['text'], 'values' => []];
+            foreach ($values[$okey] as $val) {
+                $group['values'][] = ['id' => $csv($val['ids']), 'text' => $val['text']];
+            }
+            $out['values'][] = $group;
         }
         return $out;
     }
@@ -474,11 +536,12 @@ class QuickAttributePriceUpdate
                 . ' p2c WHERE p2c.categories_id IN (' . implode(',', $cats) . '))';
         }
 
+        // Lists of IDs: an option or value name can stand for several IDs.
         if ($filters['oid'] !== '') {
-            $where[] = 'pa.options_id = ' . (int)$filters['oid'];
+            $where[] = 'pa.options_id IN (' . implode(',', array_map('intval', explode(',', self::idCsv($filters['oid'])))) . ')';
         }
         if ($filters['vid'] !== '') {
-            $where[] = 'pa.options_values_id = ' . (int)$filters['vid'];
+            $where[] = 'pa.options_values_id IN (' . implode(',', array_map('intval', explode(',', self::idCsv($filters['vid'])))) . ')';
         }
 
         if ($filters['kw'] !== '') {
