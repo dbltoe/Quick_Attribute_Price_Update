@@ -17,7 +17,7 @@ if (!defined('IS_ADMIN_FLAG')) {
 
 class QuickAttributePriceUpdate
 {
-    public const VERSION = 'v3.0.1';
+    public const VERSION = 'v3.0.2';
 
     /** Most product IDs one search may name, so a typo like 1-999999 can't build a huge query. */
     public const MAX_IDS = 1000;
@@ -339,7 +339,28 @@ class QuickAttributePriceUpdate
             'sort' => $sort,
             'dir' => (($get['qapu_dir'] ?? '') === 'desc') ? 'desc' : 'asc',
             'per' => $perPage,
+            'extra' => self::extraParams($get),
         ];
+    }
+
+    /**
+     * An add-on's own search fields, carried through paging links and the redirect
+     * after saving: any query parameter named qapu<letters>_<name> (for example
+     * qapup_mfr), as a string of up to 200 characters. The add-on validates them.
+     *
+     * @param array $get
+     * @return array name => value, sorted by name
+     */
+    public static function extraParams(array $get)
+    {
+        $extra = [];
+        foreach ($get as $k => $v) {
+            if (is_string($k) && preg_match('/^qapu[a-z0-9]+_[a-z0-9_]{1,40}$/', $k) && is_scalar($v) && strlen((string)$v) <= 200) {
+                $extra[$k] = (string)$v;
+            }
+        }
+        ksort($extra);
+        return $extra;
     }
 
     /**
@@ -359,6 +380,9 @@ class QuickAttributePriceUpdate
             'qapu_dir' => $filters['dir'] === 'asc' ? '' : $filters['dir'],
             'qapu_per' => (int)$filters['per'] === self::PER_PAGE_DEFAULT ? '' : (string)$filters['per'],
         ];
+        foreach ((array)($filters['extra'] ?? []) as $k => $v) {
+            $map[$k] = $v;
+        }
         $parts = [];
         foreach ($map as $k => $v) {
             if ((string)$v !== '') {

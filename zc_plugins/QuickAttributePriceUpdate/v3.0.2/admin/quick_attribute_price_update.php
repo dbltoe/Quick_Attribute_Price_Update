@@ -44,6 +44,16 @@ if ($qapuAction === 'save' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         is_array($_POST['qapu_onetime'] ?? null) ? $_POST['qapu_onetime'] : [],
         is_array($_POST['qapu_was'] ?? null) ? $_POST['qapu_was'] : []
     );
+    // An add-on saves its own columns here and adds its rows to the same lists
+    // ('updated', 'conflict', 'missing' as attribute row IDs, 'products' as product
+    // IDs, 'invalid' as id => typed values), so one set of messages covers the save.
+    $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_SAVE_RESULT', $qapuFilters, $qapuResult);
+    foreach (['updated', 'products', 'conflict', 'missing'] as $qapuKey) {
+        $qapuResult[$qapuKey] = array_values(array_unique(array_map('intval', (array)($qapuResult[$qapuKey] ?? []))));
+        sort($qapuResult[$qapuKey]);
+    }
+    $qapuResult['invalid'] = (array)($qapuResult['invalid'] ?? []);
+    ksort($qapuResult['invalid']);
     if ($qapuResult['updated'] !== []) {
         $messageStack->add_session(sprintf(QAPU_MSG_UPDATED, count($qapuResult['updated']), count($qapuResult['products'])), 'success');
         if (function_exists('zen_record_admin_activity')) {
@@ -76,6 +86,28 @@ $qapuFound = QuickAttributePriceUpdate::search($qapuFilters, $qapuPage, $qapuErr
 foreach (array_unique($qapuErrors) as $qapuError) {
     $messageStack->add(constant($qapuError), 'error');
 }
+
+// An add-on adds data of its own to the rows on this page (one query for all of
+// them, keyed by $row['products_attributes_id']) before they're shown.
+$zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_ROWS', $qapuFilters, $qapuFound);
+
+// Extra table columns from an add-on: 'before' the Option Name column and 'after'
+// One-Time Price, each ['text' => heading html, 'class' => css classes].
+// NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_TABLE_CELLS must then give every row the same
+// number of cells in the same places.
+$qapuHeadings = ['before' => [], 'after' => []];
+$zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_TABLE_HEADINGS', $qapuFilters, $qapuHeadings);
+$qapuColumns = 6 + count((array)($qapuHeadings['before'] ?? [])) + count((array)($qapuHeadings['after'] ?? []));
+
+/** Extra cells (or headings) for one position, from an add-on. */
+$qapuExtraCells = static function ($list, $tag) {
+    $html = '';
+    foreach (is_array($list) ? $list : [] as $cell) {
+        $html .= '<' . $tag . ($tag === 'th' ? ' scope="col"' : '') . ' class="' . ($tag === 'th' ? 'dataTableHeadingContent ' : '')
+            . htmlspecialchars((string)($cell['class'] ?? ''), ENT_QUOTES) . '">' . (string)($cell['text'] ?? '') . '</' . $tag . '>';
+    }
+    return $html;
+};
 
 $qapuCurrency = QuickAttributePriceUpdate::currency();
 $qapuParams = QuickAttributePriceUpdate::filterParams($qapuFilters);
@@ -265,6 +297,14 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
     </fieldset>
   </form>
 
+<?php
+// An add-on's own panels, each with its own forms (they sit outside both of the
+// page's forms). The third parameter is what was found.
+$qapuPanels = '';
+$zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_PANELS', $qapuFilters, $qapuPanels, $qapuFound);
+echo $qapuPanels;
+?>
+
 <?php if ($qapuFound['rows'] === []) { ?>
   <p class="alert alert-info"><?php echo QAPU_NONE_FOUND; ?></p>
 <?php } else { ?>
@@ -274,11 +314,13 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
     <caption><?php echo sprintf(QAPU_CAPTION, (int)$qapuFound['total'], (int)$qapuFound['page'], (int)$qapuFound['pages']); ?></caption>
     <thead>
       <tr class="dataTableHeadingRow">
+        <?php echo $qapuExtraCells($qapuHeadings['before'] ?? [], 'th'); ?>
         <th scope="col" class="dataTableHeadingContent"><?php echo QAPU_HEADING_OPTION; ?></th>
         <th scope="col" class="dataTableHeadingContent"><?php echo QAPU_HEADING_VALUE; ?></th>
         <th scope="col" class="dataTableHeadingContent"><?php echo QAPU_HEADING_PREFIX; ?></th>
         <th scope="col" class="dataTableHeadingContent"><?php echo QAPU_HEADING_PRICE; ?> (<?php echo $qapuEsc($qapuCurrency['code']); ?>)</th>
         <th scope="col" class="dataTableHeadingContent"><?php echo QAPU_HEADING_ONETIME; ?> (<?php echo $qapuEsc($qapuCurrency['code']); ?>)</th>
+        <?php echo $qapuExtraCells($qapuHeadings['after'] ?? [], 'th'); ?>
         <th scope="col" class="dataTableHeadingContent"><?php echo QAPU_HEADING_NOTES; ?></th>
       </tr>
     </thead>
@@ -322,7 +364,7 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
 ?>
     <tbody>
       <tr>
-        <th scope="rowgroup" colspan="6" class="qapu-product" id="qapuProduct<?php echo $qapuPid; ?>">
+        <th scope="rowgroup" colspan="<?php echo (int)$qapuColumns; ?>" class="qapu-product" id="qapuProduct<?php echo $qapuPid; ?>">
           <strong><?php echo $qapuEsc(sprintf(QAPU_PRODUCT_LINE, $qapuPid, $qapuName)); ?></strong>
           <?php echo implode(' ', $qapuProductBadges); ?>
           <span class="qapu-product-meta"><?php echo implode(' &middot; ', $qapuMeta); ?></span>
@@ -356,33 +398,41 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
         $qapuRetryRow = $qapuRetry[$qapuAid] ?? null;
         // What was typed arrived through core's strict sanitizer (htmlspecialchars), so it's
         // decoded once here before being escaped again for the box.
-        $qapuPrefixValue = $qapuRetryRow !== null ? html_entity_decode((string)$qapuRetryRow['prefix'], ENT_QUOTES, $qapuCharset) : $qapuWasPrefix;
-        $qapuPriceValue = $qapuRetryRow !== null ? html_entity_decode((string)$qapuRetryRow['price'], ENT_QUOTES, $qapuCharset) : $qapuShowPrice;
-        $qapuOnetimeValue = $qapuRetryRow !== null ? html_entity_decode((string)$qapuRetryRow['onetime'], ENT_QUOTES, $qapuCharset) : $qapuShowOnetime;
+        // An add-on's invalid entry may carry none of these (its own column was the problem).
+        $qapuRetryPrefix = $qapuRetryRow !== null && isset($qapuRetryRow['prefix']);
+        $qapuRetryPrice = $qapuRetryRow !== null && isset($qapuRetryRow['price']);
+        $qapuRetryOnetime = $qapuRetryRow !== null && isset($qapuRetryRow['onetime']);
+        $qapuPrefixValue = $qapuRetryPrefix ? html_entity_decode((string)$qapuRetryRow['prefix'], ENT_QUOTES, $qapuCharset) : $qapuWasPrefix;
+        $qapuPriceValue = $qapuRetryPrice ? html_entity_decode((string)$qapuRetryRow['price'], ENT_QUOTES, $qapuCharset) : $qapuShowPrice;
+        $qapuOnetimeValue = $qapuRetryOnetime ? html_entity_decode((string)$qapuRetryRow['onetime'], ENT_QUOTES, $qapuCharset) : $qapuShowOnetime;
 
         $qapuNotes = [];
         foreach (QuickAttributePriceUpdate::rowNotes($qapuRow) as $qapuNote) {
             $qapuNotes[] = $qapuBadge(constant($qapuNote), $qapuNote === 'QAPU_NOTE_MINUS' ? 'warning' : 'default');
         }
         $qapuRowId = 'qapuRow' . $qapuAid;
+        $qapuCells = ['before' => [], 'after' => []];
+        $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_TABLE_CELLS', $qapuRow, $qapuCells);
 ?>
       <tr id="<?php echo $qapuRowId; ?>"<?php echo $qapuRetryRow !== null ? ' class="danger"' : ''; ?>>
+        <?php echo $qapuExtraCells($qapuCells['before'] ?? [], 'td'); ?>
         <td><?php echo $qapuEsc($qapuOptionName); ?></td>
         <td><?php echo $qapuEsc($qapuValueName); ?></td>
-        <td<?php echo $qapuRetryRow !== null ? ' class="has-error"' : ''; ?>>
-          <?php echo zen_draw_hidden_field('qapu_was[' . $qapuAid . ']', QuickAttributePriceUpdate::wasValue($qapuWasPrefix, $qapuWasPrice, $qapuWasOnetime)); ?>
-          <select name="qapu_prefix[<?php echo $qapuAid; ?>]" class="form-control input-sm qapu-input qapu-prefix" data-was="<?php echo $qapuEsc($qapuWasPrefix); ?>" data-row="<?php echo $qapuRowId; ?>" aria-label="<?php echo $qapuEsc(sprintf(QAPU_LABEL_PREFIX_FOR, $qapuDescribe)); ?>"<?php echo $qapuRetryRow !== null ? ' aria-invalid="true"' : ''; ?>>
+        <td<?php echo $qapuRetryPrefix ? ' class="has-error"' : ''; ?>>
+          <?php echo zen_draw_hidden_field('qapu_was[' . $qapuAid . ']', QuickAttributePriceUpdate::wasValue($qapuWasPrefix, $qapuWasPrice, $qapuWasOnetime), 'data-row="' . $qapuRowId . '"'); ?>
+          <select name="qapu_prefix[<?php echo $qapuAid; ?>]" class="form-control input-sm qapu-input qapu-prefix" data-was="<?php echo $qapuEsc($qapuWasPrefix); ?>" data-row="<?php echo $qapuRowId; ?>" aria-label="<?php echo $qapuEsc(sprintf(QAPU_LABEL_PREFIX_FOR, $qapuDescribe)); ?>"<?php echo $qapuRetryPrefix ? ' aria-invalid="true"' : ''; ?>>
 <?php   foreach ($qapuPrefixChoices as $qapuChoice => $qapuChoiceText) { ?>
             <option value="<?php echo $qapuEsc($qapuChoice); ?>"<?php echo (string)$qapuChoice === $qapuPrefixValue ? ' selected' : ''; ?>><?php echo $qapuEsc($qapuChoiceText); ?></option>
 <?php   } ?>
           </select>
         </td>
-        <td<?php echo $qapuRetryRow !== null ? ' class="has-error"' : ''; ?>>
-          <?php echo $qapuPriceBox('qapu_price[' . $qapuAid . ']', $qapuPriceValue, $qapuShowPrice, $qapuRowId, sprintf(QAPU_LABEL_PRICE_FOR, $qapuDescribe), $qapuRetryRow !== null); ?>
+        <td<?php echo $qapuRetryPrice ? ' class="has-error"' : ''; ?>>
+          <?php echo $qapuPriceBox('qapu_price[' . $qapuAid . ']', $qapuPriceValue, $qapuShowPrice, $qapuRowId, sprintf(QAPU_LABEL_PRICE_FOR, $qapuDescribe), $qapuRetryPrice); ?>
         </td>
-        <td<?php echo $qapuRetryRow !== null ? ' class="has-error"' : ''; ?>>
-          <?php echo $qapuPriceBox('qapu_onetime[' . $qapuAid . ']', $qapuOnetimeValue, $qapuShowOnetime, $qapuRowId, sprintf(QAPU_LABEL_ONETIME_FOR, $qapuDescribe), $qapuRetryRow !== null); ?>
+        <td<?php echo $qapuRetryOnetime ? ' class="has-error"' : ''; ?>>
+          <?php echo $qapuPriceBox('qapu_onetime[' . $qapuAid . ']', $qapuOnetimeValue, $qapuShowOnetime, $qapuRowId, sprintf(QAPU_LABEL_ONETIME_FOR, $qapuDescribe), $qapuRetryOnetime); ?>
         </td>
+        <?php echo $qapuExtraCells($qapuCells['after'] ?? [], 'td'); ?>
         <td><?php echo implode(' ', $qapuNotes); ?></td>
       </tr>
 <?php
@@ -481,7 +531,9 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
     if (!form) {
         return;
     }
+    // Boxes and selects alike (an add-on's columns use the same class and data-* attributes).
     var inputs = form.querySelectorAll('.qapu-input');
+    var rows = {};
     var counter = document.getElementById('qapuChanged');
     var pattern = counter ? counter.getAttribute('data-pattern') : '';
     var changedRows = 0;
@@ -498,7 +550,7 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
     }
 
     function refresh() {
-        var rows = {};
+        rows = {};
         var i;
         for (i = 0; i < inputs.length; i++) {
             var changed = !same(inputs[i].value, inputs[i].getAttribute('data-was'));
@@ -527,6 +579,24 @@ $zco_notifier->notify('NOTIFY_QUICK_ATTRIBUTE_PRICE_UPDATE_FILTERS_FORM', $qapuF
     form.addEventListener('change', refresh);
     form.addEventListener('submit', function () {
         submitting = true;
+        refresh();
+        // Only changed rows are posted, which keeps a full page (and an add-on's extra
+        // columns) under PHP's max_input_vars. Without JavaScript every row posts and the
+        // server still writes only what changed.
+        var fields = form.querySelectorAll('[data-row]');
+        for (var i = 0; i < fields.length; i++) {
+            if (!rows[fields[i].getAttribute('data-row')]) {
+                fields[i].disabled = true;
+            }
+        }
+    });
+    // Back/forward cache: a page restored after submitting must have its boxes back.
+    window.addEventListener('pageshow', function () {
+        var fields = form.querySelectorAll('[data-row]');
+        for (var i = 0; i < fields.length; i++) {
+            fields[i].disabled = false;
+        }
+        submitting = false;
     });
     window.addEventListener('beforeunload', function (e) {
         if (!submitting && changedRows > 0) {

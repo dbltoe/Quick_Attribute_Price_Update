@@ -14,7 +14,7 @@
  * @package  QuickAttributePriceUpdate
  * @license  GNU General Public License v2.0 (https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
  */
-$qapuPluginDir = 'zc_plugins/QuickAttributePriceUpdate/v3.0.1/';
+$qapuPluginDir = 'zc_plugins/QuickAttributePriceUpdate/v3.0.2/';
 $qapuReadmeUrl = (defined('DIR_WS_CATALOG') ? DIR_WS_CATALOG : '/') . $qapuPluginDir . 'readme.html';
 $qapuGithubUrl = 'https://github.com/dbltoe/Quick_Attribute_Price_Update';
 
@@ -42,7 +42,7 @@ $qapuLinks =
     . '</div>';
 
 return [
-    'pluginVersion' => 'v3.0.1',
+    'pluginVersion' => 'v3.0.2',
     'pluginName' => 'Quick Attribute Price Update',
     'pluginDescription' =>
         'Adds Catalog > Quick Attribute Price Update: find attribute prices across products by product ID '

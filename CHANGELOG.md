@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.0.2 — 2026-10-24
+
+- Five more notifiers, so an add-on can extend the page: extra data for the rows shown, panels between the search form and the table, extra table columns with their cells, and its own results in the save messages. See docs/CUSTOMIZING.md.
+- An add-on's own search fields (named `qapu<letters>_...`) are kept through paging and after saving.
+- Saving posts only the rows you changed, so a full page stays under PHP's `max_input_vars` when an add-on adds columns. Without JavaScript every row still posts and only changed values are written, as before.
+- Nothing changes on stores without an add-on.
+
 ## v3.0.1 — 2026-10-24
 
 - Option Name and Option Value now search by name. A store with two options both called "Size:", or with "1 inch" saved as several different option values, gets one "Size:" entry and one "1 inch" entry, and each finds every matching row. Before, each list showed the duplicates separately with nothing to tell them apart, and choosing one found only part of the rows.

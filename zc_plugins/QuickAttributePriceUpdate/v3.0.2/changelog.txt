@@ -1,5 +1,16 @@
 Quick Attribute Price Update -- changelog
 
+v3.0.2 (2026-10-24)
+  - Five more notifiers, so an add-on can extend the page: extra data
+    for the rows shown, panels between the search form and the table,
+    extra table columns with their cells, and its own results in the
+    save messages. See docs/CUSTOMIZING.md.
+  - An add-on's own search fields are kept through paging and saving.
+  - Saving posts only the rows you changed, so a full page stays under
+    PHP's max_input_vars. Without JavaScript every row still posts and
+    only changed values are written, as before.
+  - Nothing changes on stores without an add-on.
+
 v3.0.1 (2026-10-24)
   - Option Name and Option Value search by name. Two options both called
     "Size:", or "1 inch" saved as several option values, now show once
