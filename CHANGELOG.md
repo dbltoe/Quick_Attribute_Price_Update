@@ -1,8 +1,8 @@
 # Changelog
 
-## v1.0.0 — 2026-10-24
+## v3.0.0 — 2026-10-24
 
-First release, for Zen Cart 1.5.8a through 3.0.0 on PHP 7.4 through 8.5. No core file is changed and no table is added.
+First release, numbered 3.0.0 to match its companion, Quick Price Update. For Zen Cart 1.5.8a through 3.0.0 on PHP 7.4 through 8.5. No core file is changed and no table is added.
 
 - Catalog > Quick Attribute Price Update: find attribute rows by product ID or ID ranges, by category with or without its subcategories, by option name and option value, by product name or model, and by product status; "Priced Rows Only"; sort products and page the results.
 - Rows grouped under each product, with its base price, "Starting at" price, and links to the product, the Attributes Controller and Quick Price Update (when installed).

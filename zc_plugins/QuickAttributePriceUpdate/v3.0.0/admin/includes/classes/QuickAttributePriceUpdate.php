@@ -17,7 +17,7 @@ if (!defined('IS_ADMIN_FLAG')) {
 
 class QuickAttributePriceUpdate
 {
-    public const VERSION = 'v1.0.0';
+    public const VERSION = 'v3.0.0';
 
     /** Most product IDs one search may name, so a typo like 1-999999 can't build a huge query. */
     public const MAX_IDS = 1000;

@@ -1,7 +1,8 @@
 Quick Attribute Price Update -- changelog
 
-v1.0.0 (2026-10-24)
-  First release, for Zen Cart 1.5.8a through 3.0.0 on PHP 7.4 through 8.5.
+v3.0.0 (2026-10-24)
+  First release, numbered 3.0.0 to match its companion, Quick Price
+  Update. For Zen Cart 1.5.8a through 3.0.0 on PHP 7.4 through 8.5.
   No core file is changed and no table is added.
 
   - Catalog > Quick Attribute Price Update: find attribute rows across
