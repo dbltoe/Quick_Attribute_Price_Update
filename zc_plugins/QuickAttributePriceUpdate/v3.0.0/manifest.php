@@ -20,7 +20,7 @@ $qapuGithubUrl = 'https://github.com/dbltoe/Quick_Attribute_Price_Update';
 
 // The opening-post permalink of the plugin's Zen Cart forum thread. Empty
 // renders no button: a link that 404s is worse than none.
-$qapuForumUrl = '';
+$qapuForumUrl = 'https://www.zen-cart.com/threads/207448?page=1#post-1347750';
 
 $qapuButtonGap = '6px';
 

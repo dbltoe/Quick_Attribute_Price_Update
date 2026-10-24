@@ -18,6 +18,10 @@ Find attribute prices across all your products by product ID, category, option n
 
 See [docs/INSTALL.md](docs/INSTALL.md), [docs/CONFIGURATION.md](docs/CONFIGURATION.md), [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) and [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). The full read-me is `readme.html`.
 
+## Support
+
+The [Quick Attribute Price Update support thread](https://www.zen-cart.com/threads/207448?page=1#post-1347750) on the Zen Cart forum.
+
 ## Companion
 
 [Quick Price Update](https://github.com/dbltoe/Quick_Price_Update) changes products' own (base) prices and quantities. The two link to each other but work alone.
