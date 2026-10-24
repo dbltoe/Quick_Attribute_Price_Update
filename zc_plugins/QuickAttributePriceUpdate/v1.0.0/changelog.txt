@@ -1,0 +1,28 @@
+Quick Attribute Price Update -- changelog
+
+v1.0.0 (2026-10-24)
+  First release, for Zen Cart 1.5.8a through 3.0.0 on PHP 7.4 through 8.5.
+  No core file is changed and no table is added.
+
+  - Catalog > Quick Attribute Price Update: find attribute rows across
+    products by product ID or ID ranges (12, 15, 40-55), by category with
+    or without its subcategories, by option name and option value, by
+    product name or model, and by product status; "Priced Rows Only"
+    hides rows with no price; sort products and page the results.
+  - Rows are grouped under each product, with its base price, its
+    "Starting at" price, and links to the product, the Attributes
+    Controller and (when installed) Quick Price Update.
+  - Change the prefix (+, - or blank), the price and the one-time price
+    in the table and save every changed row with one button. Values are
+    checked before anything is written; a row someone else changed after
+    the page loaded is skipped and reported, never overwritten.
+  - Once per product touched, saving stamps the product's last-modified
+    date and refreshes the storefront's price-sort value, so price
+    sorting and "Starting at" prices stay right.
+  - Notes flag what the row's price doesn't show by itself: free, display
+    only, default, not discounted, not in base price, price factors,
+    quantity prices, word or letter pricing, and a minus price on a
+    priced-by-attributes product. Products whose own price is 0 but which
+    aren't priced by attributes are flagged too.
+  - A link in Catalog > Attributes Controller's action menu opens the
+    product (or category) on screen here.

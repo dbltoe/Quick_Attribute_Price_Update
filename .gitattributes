@@ -1,0 +1,10 @@
+# Line endings and file types.
+#
+# Ask git for LF line endings on text files, so a checkout on Windows cannot
+# quietly turn a plugin file into CRLF and hand a store a file that differs
+# byte-for-byte from the one that was tested.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.zip binary

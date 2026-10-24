@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick Attribute Price Update for Zen Cart: Read Me</title>
+<style>
+:root{--ink:#1d2329;--muted:#55606b;--line:#d8dee4;--panel:#f6f8fa;--link:#0a58ca;--note:#fff8e1;--noteline:#e0c060;--bg:#fff}
+@media (prefers-color-scheme:dark){:root{--ink:#e6e9ec;--muted:#a9b2bb;--line:#3a434c;--panel:#20262c;--link:#7fb2ff;--note:#2e2a1c;--noteline:#7a6a30;--bg:#161b20}}
+body{font:16px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);max-width:52em;margin:0 auto;padding:16px}
+h1{font-size:1.8em;margin:.2em 0}
+h2{font-size:1.35em;margin:2em 0 .5em;padding-bottom:.25em;border-bottom:1px solid var(--line)}
+h3{font-size:1.1em;margin:1.4em 0 .4em}
+p,li{line-height:1.6}
+a{color:var(--link)}
+code,pre{font-family:Menlo,Consolas,monospace;font-size:.9em;background:var(--panel);border-radius:3px}
+code{padding:.1em .3em;overflow-wrap:anywhere}
+table{border-collapse:collapse;width:100%;margin:.5em 0 1em}
+th,td{border:1px solid var(--line);padding:.4em .6em;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.lead{color:var(--muted)}
+.note{background:var(--note);border-left:4px solid var(--noteline);padding:.6em 1em;margin:1em 0}
+</style>
+</head>
+<body>
+
+<h1>Quick Attribute Price Update</h1>
+<p class="lead">Version 1.0.0 &middot; for Zen Cart 1.5.8a through 3.0.0 &middot; PHP 7.4 through 8.5 &middot; by My Zen Cart Host (dbltoe) &middot; GNU GPL v2</p>
+
+<p>Quick Attribute Price Update adds <strong>Catalog &gt; Quick Attribute Price Update</strong> to your admin. Find the attribute prices you want across all your products, change them right in the table, and save every change with one button. Zen Cart's own Attributes Controller edits one attribute of one product at a time; this page shows every product that uses, say, <em>Size: 1 inch</em>, with its price, on one screen. No core files are changed, and there are no settings to set.</p>
+
+<h2>What It Does</h2>
+<ul>
+  <li><strong>Find attribute rows by product.</strong> Type one product ID, a list, or ranges: <code>12, 15, 40-55</code>. Exact matches only.</li>
+  <li><strong>Find them by category</strong>, with or without everything in its subcategories. Products linked into a category are included.</li>
+  <li><strong>Find them by option name and option value</strong>, for example every product's <em>Size</em> option, or just its <em>1 inch</em> value.</li>
+  <li><strong>Narrow it down</strong> by product name or model and by Active/Inactive, or tick <em>Priced Rows Only</em> to hide rows with no price. Sort products by sort order, ID, name or model, and show 25, 50, 100 or 200 rows per page.</li>
+  <li><strong>Rows are grouped under each product</strong>, with its base price, its <em>Starting at</em> price (the lowest price shoppers see), and links to edit the product, open it in the Attributes Controller, or change its base price in Quick Price Update when you have that plugin.</li>
+  <li><strong>Change the prefix, price and one-time price in the table.</strong> Changed rows are highlighted and counted. One <em>Save Changes</em> writes only the rows you changed.</li>
+  <li><strong>Every value is checked first.</strong> Prices take up to 4 decimal places and can't be negative (use the <code>-</code> prefix to subtract). <code>1,234.50</code> is understood; <code>12,50</code> is refused rather than misread. A row that doesn't pass is not saved, and it comes back highlighted with what you typed.</li>
+  <li><strong>Two people can't overwrite each other.</strong> If a row changed somewhere else after your page loaded, it's skipped and you're told which rows.</li>
+  <li><strong>The storefront stays right.</strong> For every product a save touches, Zen Cart's price-sort value is refreshed (so price sorting and <em>Starting at</em> prices update) and the product's last-modified date is stamped. Zen Cart's own Attributes Controller doesn't stamp that date.</li>
+  <li><strong>Notes show what a row's price doesn't</strong>: Free, Display Only, Default, Not Discounted, Not in Base Price, Price Factor, Quantity Prices and Word or Letter Pricing. A product whose own price is 0 but which isn't set to Priced by Attributes is flagged, since shoppers may see a 0 price.</li>
+  <li><strong>A link in the Attributes Controller.</strong> Its action menu gets <em>Quick Attribute Price Update: This Product</em> (or <em>This Category</em>).</li>
+</ul>
+
+<h2>Install</h2>
+<ol>
+  <li>Unzip the package. Copy the <code>zc_plugins/QuickAttributePriceUpdate</code> folder into your store's <code>zc_plugins/</code> folder.</li>
+  <li>In your admin, go to <strong>Modules &gt; Plugin Manager</strong>, select <strong>Quick Attribute Price Update</strong> and click <strong>Install</strong>.</li>
+  <li>Open <strong>Catalog &gt; Quick Attribute Price Update</strong>.</li>
+</ol>
+<p>Admins other than superusers need the page added to their admin profile (<strong>Admins &gt; Admin Profiles</strong>, under Catalog). The Attributes Controller link only shows for admins who can open the page.</p>
+
+<h2>Upgrade and Uninstall</h2>
+<p>To upgrade, copy the new version's folder beside the old one in <code>zc_plugins/QuickAttributePriceUpdate/</code> and click <strong>Upgrade</strong> in Plugin Manager. To remove it, click <strong>Uninstall</strong>: that takes the page off the menu. The plugin creates no tables and stores no settings, so nothing else is left behind. Prices you saved stay as you saved them.</p>
+
+<h2>Good to Know</h2>
+<div class="note">
+  <p>This page changes three fields of each attribute: its prefix, its price and its one-time price. Everything else (price factors, quantity prices, word and letter prices, weights, images, the yes/no settings) stays as it is; edit those in the Attributes Controller. The notes column shows when one of them applies.</p>
+</div>
+<ul>
+  <li>Prices are in your default currency, the same as in the Attributes Controller.</li>
+  <li>A blank prefix adds, just like <code>+</code>. Only <code>-</code> subtracts.</li>
+  <li>The product's own (base) price is not on this page. Change it on the product's edit page, or in Quick Price Update.</li>
+  <li>If you leave the page with unsaved changes, your browser asks first.</li>
+  <li>Each save is recorded in <strong>Tools &gt; Admin Activity Log</strong> with the attribute row IDs and product IDs that changed.</li>
+  <li>A search can name up to 1,000 product IDs at a time.</li>
+  <li>For a whole-catalog spreadsheet round trip, Database I/O Manager (DbIo) has an attributes export and import.</li>
+</ul>
+
+<h2>Compatibility</h2>
+<table>
+  <tr><th>Zen Cart</th><td>1.5.8a, 2.0.x, 2.1.0, 2.2.x, 2.3 and 3.0.0</td></tr>
+  <tr><th>PHP</th><td>7.4 through 8.5 (whatever your Zen Cart version supports)</td></tr>
+  <tr><th>Core files changed</th><td>None. The Attributes Controller link uses a notifier that exists, with the same parameters, on every version above.</td></tr>
+  <tr><th>Templates</th><td>Admin only; your storefront template doesn't matter.</td></tr>
+</table>
+
+<h2>Support</h2>
+<p>Questions and problem reports go on the <a href="https://www.zen-cart.com/">Zen Cart forum</a>; the <em>Forum Support Thread</em> button in Plugin Manager opens this plugin's thread. Please include your Zen Cart and PHP versions, and any <code>myDEBUG-</code> file from your store's <code>logs/</code> folder from that moment.</p>
+
+<h2>License</h2>
+<p>GNU General Public License, version 2. See <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">gnu.org</a> and the LICENSE file in the package. Source: <a href="https://github.com/dbltoe/Quick_Attribute_Price_Update">github.com/dbltoe/Quick_Attribute_Price_Update</a>.</p>
+
+<h2>Changelog</h2>
+<h3>1.0.0 (2026-10-24)</h3>
+<p>First release.</p>
+
+</body>
+</html>

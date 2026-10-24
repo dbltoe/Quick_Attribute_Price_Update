@@ -1,0 +1,4 @@
+# Maintainer tooling -- kept local, never shipped.
+tests/
+tools/
+dist/
