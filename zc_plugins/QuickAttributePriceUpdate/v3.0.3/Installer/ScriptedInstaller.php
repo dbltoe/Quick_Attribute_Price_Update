@@ -10,7 +10,7 @@
  * called by core's ScriptedInstaller.
  *
  * @package  QuickAttributePriceUpdate
- * @license  GNU General Public License v2.0 (https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
  */
 
 // FILENAME_QUICK_ATTRIBUTE_PRICE_UPDATE: the plugin isn't marked installed until

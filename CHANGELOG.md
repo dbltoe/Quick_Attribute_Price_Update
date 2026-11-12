@@ -1,5 +1,14 @@
 # Changelog
 
+## v3.0.3 — 2026-11-11
+
+- **License: GNU General Public License, version 3** (was version 2).
+- **readme.html is replaced by README.md.** The ReadMe button in Plugin Manager opens it inside the admin, for superusers only, in its own window (`index.php?cmd=quick_attribute_price_update_readme`); it is no longer a public file under `zc_plugins/`. The same README.md is at the root of the download.
+- The Plugin Manager buttons now read ReadMe, Forum Thread, GitHub.
+- Nothing changes on Catalog > Quick Attribute Price Update itself.
+
+Upgrading: put the v3.0.3 folder beside the old one and click **Upgrade** in Modules > Plugin Manager.
+
 ## v3.0.2 — 2026-10-24
 
 - Five more notifiers, so an add-on can extend the page: extra data for the rows shown, panels between the search form and the table, extra table columns with their cells, and its own results in the save messages. See docs/CUSTOMIZING.md.

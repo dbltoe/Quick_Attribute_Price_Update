@@ -8,7 +8,7 @@
  * through 8.5: no union types, no match, no named arguments.
  *
  * @package  QuickAttributePriceUpdate
- * @license  GNU General Public License v2.0 (https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
  */
 
 if (!defined('IS_ADMIN_FLAG')) {
@@ -17,7 +17,7 @@ if (!defined('IS_ADMIN_FLAG')) {
 
 class QuickAttributePriceUpdate
 {
-    public const VERSION = 'v3.0.2';
+    public const VERSION = 'v3.0.3';
 
     /** Most product IDs one search may name, so a typo like 1-999999 can't build a huge query. */
     public const MAX_IDS = 1000;
