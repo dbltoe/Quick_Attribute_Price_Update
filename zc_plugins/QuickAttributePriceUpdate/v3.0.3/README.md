@@ -1,6 +1,6 @@
 # Quick Attribute Price Update
 
-Version 3.0.3 · Zen Cart 1.5.8a through 3.0.0 · PHP 7.4 through 8.5 · GPL v3 · by My Zen Cart Host (dbltoe)
+Version 3.0.3 · Zen Cart 1.5.8a through 3.0.0 · PHP 7.4 through 8.5 · GPL v2 · by My Zen Cart Host (dbltoe)
 
 Quick Attribute Price Update adds **Catalog > Quick Attribute Price Update** to your admin. Find the attribute prices you want across all your products, change them right in the table, and save every change with one button. Zen Cart's own Attributes Controller edits one attribute of one product at a time; this page shows every product that uses, say, *Size: 1 inch*, with its price, on one screen. No core files are changed, and there are no settings to set.
 
@@ -67,8 +67,8 @@ Questions and problem reports go in the Quick Attribute Price Update support thr
 
 ## Changelog
 
-See `CHANGELOG.md`. Version 3.0.3 moves the plugin to the GNU General Public License, version 3, and replaces readme.html with this guide, opened from the ReadMe button in Plugin Manager.
+See `CHANGELOG.md`. Version 3.0.3 replaces readme.html with this guide, opened from the ReadMe button in Plugin Manager.
 
 ## License
 
-Quick Attribute Price Update is free software under the GNU General Public License, version 3 (https://www.gnu.org/licenses/gpl-3.0.html); the full text is in `LICENSE`. Copyright © 2026 My Zen Cart Host (dbltoe).
+Quick Attribute Price Update is free software under the GNU General Public License, version 2 (https://www.gnu.org/licenses/old-licenses/gpl-2.0.html); the full text is in `LICENSE`. Copyright © 2026 My Zen Cart Host (dbltoe).

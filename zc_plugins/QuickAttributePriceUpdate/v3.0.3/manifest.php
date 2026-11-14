@@ -19,7 +19,7 @@
  * the Library ID must be right in the release a store first installs.
  *
  * @package  QuickAttributePriceUpdate
- * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
+ * @license  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License v2.0
  */
 $qapuReadmeUrl = 'index.php?cmd=quick_attribute_price_update_readme';
 // Zen Cart 3.0.0 reads every manifest on every admin page, early (template resolver),
